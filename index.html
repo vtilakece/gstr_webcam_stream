@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<body>
+  <video id="v" autoplay muted playsinline controls width="640"></video>
+
+  <script>
+    const video = document.getElementById("v");
+    const mediaSource = new MediaSource();
+    video.src = URL.createObjectURL(mediaSource);
+
+    mediaSource.addEventListener("sourceopen", () => {
+      const sb = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+      const ws = new WebSocket("ws://127.0.0.1:8000/stream");
+      ws.binaryType = "arraybuffer";
+
+      const queue = [];
+
+      function pump() {
+        if (!sb.updating && queue.length > 0) {
+          sb.appendBuffer(queue.shift());
+        }
+      }
+
+      sb.addEventListener("updateend", pump);
+
+      ws.onmessage = (event) => {
+        queue.push(event.data);
+        pump();
+
+        if (video.buffered.length > 0) {
+          const live = video.buffered.end(video.buffered.length - 1);
+          if (live - video.currentTime > 0.5) {
+            video.currentTime = live - 0.1;
+          }
+        }
+      };
+    });
+  </script>
+</body>
+</html>

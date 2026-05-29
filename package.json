@@ -1,0 +1,9 @@
+{
+  "name": "webm-live-browser",
+  "version": "0.1.0",
+  "description": "Low-latency webcam streaming from GStreamer to a browser using WebM over HTTP.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
