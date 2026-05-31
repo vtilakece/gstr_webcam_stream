@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<body>
+  <video id="v" autoplay playsinline controls width="640"></video>
+
+  <script>
+    const v = document.getElementById("v");
+    const STREAM_URL = "http://127.0.0.1:8090";
+
+    function startStream() {
+      console.log("starting stream");
+      v.src = STREAM_URL + "?t=" + Date.now();
+      v.load();
+      v.play().catch(err => console.log("play error:", err));
+    }
+
+    function jumpToLive() {
+      if (v.buffered.length === 0) return;
+
+      const live = v.buffered.end(v.buffered.length - 1);
+      v.currentTime = Math.max(0, live - 0.2);
+      v.playbackRate = 1.0;
+    }
+
+    function resetStream() {
+      console.log("resetting stream");
+
+      v.pause();
+      v.removeAttribute("src");
+      v.load();
+
+      setTimeout(() => {
+        startStream();
+      }, 100);
+    }
+
+    v.addEventListener("loadstart", () => console.log("loadstart"));
+    v.addEventListener("loadedmetadata", () => console.log("loadedmetadata"));
+    v.addEventListener("playing", () => console.log("playing"));
+    v.addEventListener("waiting", () => console.log("waiting"));
+    v.addEventListener("error", () => console.log("video error", v.error));
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        resetStream();
+      }
+    });
+
+    setInterval(() => {
+      if (document.hidden) return;
+      if (v.buffered.length === 0) return;
+
+      const live = v.buffered.end(v.buffered.length - 1);
+      const delay = live - v.currentTime;
+
+      console.log("delay", delay.toFixed(2));
+
+      if (delay > 1.0) {
+        v.currentTime = Math.max(0, live - 0.2);
+        v.playbackRate = 1.0;
+      } else if (delay > 0.5) {
+        v.playbackRate = 1.25;
+      } else {
+        v.playbackRate = 1.0;
+      }
+    }, 500);
+
+    startStream();
+  </script>
+</body>
+</html>
